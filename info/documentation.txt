@@ -1,0 +1,17 @@
+https://www.pygame.org/docs/
+pygame.draw
+pygame.draw.rect(ctx,color,(x,y,w,h))
+pygame.draw.circle(ctx,color,(x,y),r)
+pygame.draw.arc(ctx,color,(x,y,w,h),start,end)
+pygame.draw.line(ctx,color,(x1,y1),(x2,y2))
+
+pygame.image
+pygame.image.load("path")
+ctx.blit(img|text,(x,y)|textRect)
+
+pygame.font
+pygame.font.init()
+pygame.font.Font("path",size)
+pygame.Font.render(text,True,color)
+RenderedFont.get_rect()
+RenderedFont.top|right|bottom|left = value
