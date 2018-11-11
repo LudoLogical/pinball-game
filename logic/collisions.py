@@ -146,6 +146,20 @@ def circleTiltedRect(circ, rectPoints, rectW, rectH, rectAngle):
 
     if math.hypot(dx, dy) < circ.r:
         return True
+
+        # find bounce direction, return associated number
+        if dy / rect.h < dx / rect.w: # ratios dissociate from unequal sides of rectangles
+            if dx + abs(circ.spd[0]) <= dxMin: # if this function would return true next tick
+                return 3 # flip both directions
+            else:
+                return 1 # flip x direction
+        else: # dx / rect.w < dy / rect.h:
+            if dy + abs(circ.spd[1]) <= dyMin:
+                return 3 # flip both directions
+            else:
+                return 2 # flip y direction
+
+
     else:
         return False
 

@@ -8,6 +8,7 @@ from objects.rect import Rect
 from objects.flipper import Flipper
 from objects.ball import Ball
 from objects.bumper import Bumper
+from objects.brick import Brick
 
 # Window will spawn in exact center
 import os
@@ -41,12 +42,13 @@ def main():
     # midline = Rect(199,0,2,600,(0,0,0))
 
     running = True
-    score = 0
+    ballsLeft = 2
     state = constants.TITLE_SCREEN
 
     playButton = Rect(constants.gameW/2-105, constants.gameH-200, 210, 63, None, images.playButton)
+    plunger = Rect(constants.gameW-30, constants.gameH-60, 20, 60, None, images.plunger)
 
-    ball = Ball(300,50,10,constants.colors['ball'])
+    ball = Ball(380,550,10,constants.colors['ball'])
 
     # PREP FOR FLIPPERS
     leftX = -15 + constants.gameW/2-45
@@ -76,7 +78,8 @@ def main():
         Rect(constants.gameW-40,0,40,constants.gameH,constants.colors['wall'])
     ]
     bumpers = [Bumper(60,60),Bumper(175,145),Bumper(265,130),Bumper(240,210),
-                Bumper(100,270,50,None,images.burst,"superbumper")]
+                Bumper(100,270,50,50,None,images.burst,"superbumper")]
+    bricks = [Brick(30,160,95,36,30+48,30+95-48)]
 
     while running:
         running = listen(running)
@@ -89,6 +92,12 @@ def main():
 
         elif state == constants.STAGE_ONE:
 
+            if keyboard.controls['keySpace'] and ball.launching and ball.spd[1] == 0:
+                ball.spd[1] = -14
+
+            if keyboard.controls['keyEnter']:
+                ball.reset()
+
             ctx.fill(constants.colors['bg'])
 
             for b in bases:
@@ -99,15 +108,30 @@ def main():
                 f.go(ctx, ball)
             for bb in bumpers:
                 bb.go(ctx)
+            for bbb in bricks:
+                bbb.go(ctx)
 
             gfxdraw.filled_polygon(ctx,[[350,0],[400,0],[400,50]],constants.colors['releaser'])
             gfxdraw.aapolygon(ctx,[[350,0],[400,0],[400,50]],constants.colors['releaser'])
 
-            ctx.blit(images.brick,(20,130))
-            ctx.blit(images.button,(320,320))
+            plunger.go(ctx)
+            ctx.blit(images.button,(330,320))
 
+            scoreTEXT = str(ballsLeft) + " | " + str(ball.score)
+            scoreRender = constants.muli["30"].render(scoreTEXT,True,constants.colors['score'])
+            scoreRECT = scoreRender.get_rect()
+            scoreRECT.right = constants.gameW - 60
+            scoreRECT.top = 20
+            ctx.blit(scoreRender,scoreRECT)
 
-            ball.go(ctx, flippers, bases, walls, bumpers)
+            ball.go(ctx, flippers, bases, walls, bumpers, bricks)
+
+            if ball.y > constants.gameH or ball.x < 0 or ball.x > constants.gameW:
+                if ballsLeft > 0:
+                    ball.reset()
+                    ballsLeft -= 1
+                else:
+                    state = constants.GAME_OVER
 
             # Debug
             # pygame.draw.rect(ctx,constants.colors['white'],(leftX-35,550,1,1))
@@ -117,6 +141,21 @@ def main():
             fpsTEXT = str(round(clock.get_fps(),1))
             fps = constants.muli["15"].render(fpsTEXT,True,constants.colors['black'])
             ctx.blit(fps,(25,8))
+
+        elif state == constants.GAME_OVER:
+            ctx.blit(images.gameOver,(0,0))
+            playButton.go(ctx)
+
+            scoreTEXT = str(ball.score) + " points."
+            scoreRender = constants.muli["30"].render(scoreTEXT,True,constants.colors['score'])
+            scoreRECT = scoreRender.get_rect()
+            scoreRECT.center = (constants.gameW/2, constants.gameH - 300)
+            ctx.blit(scoreRender,scoreRECT)
+
+            if mouse.mouse['click'] and collisions.rectPoint(playButton,mouse.mouse['pos']):
+                state = constants.STAGE_ONE
+                ball.score = 0
+                ballsLeft = 3
 
         # Update Window
         pygame.display.update()
