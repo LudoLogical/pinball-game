@@ -31,13 +31,12 @@ class Ball(Circle):
             big = flipper.angle
 
         vertLeeway = abs(flipper.h*math.cos(5*math.pi/36))
-        print(vertLeeway)
         if collisions.circPie(self, Circle(flipper.pivotX,flipper.y,flipper.w,None), small, big) \
             or collisions.circleTiltedRect(self, flipper.currentCoords(), flipper.w, flipper.h, flipper.getAngle()):
-            #while collisions.circleTiltedRect(self, flipCoords, flipper.w, flipper.h, flipper.getAngle()):
-                #self.y -= 2
+            while collisions.circleTiltedRect(self, flipCoords, flipper.w, flipper.h, flipper.getAngle()):
+                self.y -= 2
 
-            self.bounce(flipper)
+            self.bounce(flipper.getAngle())
 
             if flipper.name == "L":
                 naturalModifier = 5*math.pi/36
@@ -52,17 +51,17 @@ class Ball(Circle):
             self.y += self.spd[1]
 
 
-    def moveIllegal(self, ctx, flippers, bases, walls):
+    def moveIllegal(self, ctx, flippers, bases, walls, bumpers):
         for f in flippers:
             if collisions.circleTiltedRect(self, f.currentCoords(), f.w, f.h, f.getAngle()):
-                return f
+                return f.getAngle()
         for b in bases:
             flipCoords = copy.deepcopy(b.points)
             flipCoords.sort(key=sortByY)
             w = abs((flipCoords[2][0]-flipCoords[0][0]))
             h = abs((flipCoords[1][1]-flipCoords[0][1]))
             if collisions.circleTiltedRect(self, flipCoords, w, h, b.angle):
-                return b
+                return b.getAngle()
         for w in walls:
             collides = collisions.circleRect(self, w)
             if collides:
@@ -74,14 +73,22 @@ class Ball(Circle):
                     self.spd[1] *= -self.bounciness
                 self.x += self.spd[0]
                 self.y += self.spd[1]
+        for bb in bumpers:
+            if collisions.circles(self, bb):
+                # We want to speed up from bumpers
+                self.spd[0] *= 1.5
+                self.spd[1] *= 1.5
+                # The normal line is the line connecting centers
+                # Therefore, the desired tangent angle output subtracts pi/2
+                return math.atan2(self.y-bb.y, self.x-bb.x) - math.pi/2
 
         return None
 
-    def bounce(self, surface):
+    def bounce(self, surfaceAngle):
 
         # [newvx, newvy]=[oldvx, oldvy]−[C*normalx, C*normaly] where C = 2oldvxnx + 2oldvyny
 
-        normalAngle = surface.getAngle() + math.pi/2
+        normalAngle = surfaceAngle + math.pi/2
         normalX = math.cos(normalAngle)
         normalY = math.sin(normalAngle)
 
@@ -90,20 +97,19 @@ class Ball(Circle):
         self.spd[0] -= constant*normalX * self.bounciness
         self.spd[1] -= constant*normalY * self.bounciness
 
-    def pos(self, ctx, flippers, bases, walls):
+    def pos(self, ctx, flippers, bases, walls, bumpers):
         self.accelerate()
         self.x += self.spd[0]
         self.y += self.spd[1]
-        bounceSurface = self.moveIllegal(ctx, flippers, bases, walls)
-        if bounceSurface != None:
+        bounceAngle = self.moveIllegal(ctx, flippers, bases, walls, bumpers)
+        if bounceAngle != None:
             self.x -= self.spd[0]
             self.y -= self.spd[1]
-            self.bounce(bounceSurface)
+            self.bounce(bounceAngle)
             self.x += self.spd[0]
             self.y += self.spd[1]
         #self.x = mouse.mouse['pos'][0]
         #self.y = mouse.mouse['pos'][1]
-        print(" ")
 
     def draw(self, ctx):
         if self.img != None:
@@ -112,6 +118,6 @@ class Ball(Circle):
             gfxdraw.filled_circle(ctx,int(self.x),int(self.y),self.r,self.color)
             gfxdraw.aacircle(ctx,int(self.x),int(self.y),self.r,self.color)
 
-    def go(self, ctx, flippers, bases, walls):
-        self.pos(ctx, flippers, bases, walls)
+    def go(self, ctx, flippers, bases, walls, bumpers):
+        self.pos(ctx, flippers, bases, walls, bumpers)
         self.draw(ctx)

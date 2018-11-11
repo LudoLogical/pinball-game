@@ -16,7 +16,7 @@ class Flipper(Rect):
 
         self.inactiveRecent = 0
         self.cooldown = 0
-        self.cooldownMax = 4
+        self.cooldownMax = 3
 
         self.angleCoords = self.prepCoords(angle)
         self.activeAngleCoords = self.prepCoords(activeAngle)

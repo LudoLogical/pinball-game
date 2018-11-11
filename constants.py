@@ -7,15 +7,15 @@ playerW, playerH = 60, 120
 gridLength = 5
 
 # COLORS
-black = (0,0,0)
-grey = (128,128,128)
-minigrey = (178,178,178)
-yellow = (255,255,0)
-white = (255,255,255)
-red = (255,0,0)
-blue = (0,0,255)
-green = (0,255,0)
-lightpurple = (86,95,120)
+colors = {
+    'ball': (234,206,205),
+    'flipper': (226, 135, 80),
+    'wall': (30, 23, 36),
+    'releaser': (18, 13, 21),
+    'bg': (56, 45, 62),
+    'white': (255,255,255),
+    'black': (0,0,0)
+}
 
 # FONTS
 muli = {
@@ -25,8 +25,11 @@ muli = {
     "70": pygame.font.Font("fonts/muli.ttf",70)
 }
 
-# WASD
-W, A, S, D = 0, 1, 2, 3
-
 # ACCELERATION // 1.11m/s
 TABLE_ACCELERATION = 0.2
+
+# STATES
+TITLE_SCREEN = 1
+GAME_OVER = 2
+STAGE_ONE = 3
+STAGE_TWO = 4

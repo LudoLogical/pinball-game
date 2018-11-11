@@ -29,9 +29,7 @@ controls = {
            }
 
 def listen(event):
-        if event.type == pygame.QUIT:
-            close()
-        elif event.type == pygame.KEYDOWN:
+        if event.type == pygame.KEYDOWN:
             for p in presets:
                 if event.key == presets[p]:
                     controls[p] = True
