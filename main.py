@@ -1,4 +1,5 @@
 import pygame, constants, math
+import keyboard, mouse
 from logic import collisions
 from img import images
 from objects.rect import Rect
@@ -20,14 +21,9 @@ os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (windowX, windowY)
 # angle =
 # speed = 1.6v
 
-from pygame.locals import NOFRAME, DOUBLEBUF
-# flags = DOUBLEBUF
-
 pygame.init()
-
-# pygame.FULLSCREEN
+from pygame.locals import NOFRAME, DOUBLEBUF #FULLSCREEN
 ctx = pygame.display.set_mode((constants.gameW,constants.gameH), NOFRAME | DOUBLEBUF)
-# ctx = pygame.display.set_mode((constants.gameW,constants.gameH), flags)
 
 ctx.set_alpha(None)
 pygame.display.set_caption("Pinball")
@@ -35,8 +31,13 @@ clock = pygame.time.Clock()
 
 def listen(running):
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+        if event.type == pygame.KEYUP and event.key == pygame.K_ESCAPE:
             running = False
+        # elif event.type == sounds.END_FLAG:
+        #     sounds.changeMusic(sounds.overtureLoopTime)
+        else:
+            keyboard.listen(event)
+            mouse.listen()
     return running
 
 def main():
@@ -51,25 +52,32 @@ def main():
     leftX = -15 + constants.gameW/2-45
     rightX = 15 + constants.gameW/2+45 + 2*35
 
-    daFlip = Flipper(leftX,550,90,20,math.pi/6,(0,0,255))
-    daFlip2 = Flipper(rightX,550,90,20,5*math.pi/6,(0,128,255))
+    daFlip = Flipper(leftX,550,90,20,math.pi/6,-math.pi/6,(0,0,255))
+    daFlip2 = Flipper(rightX,550,90,20,5*math.pi/6,7*math.pi/6,(0,128,255))
 
     midline = Rect(199,0,2,600,(0,0,0))
 
     while running:
         running = listen(running)
         # Reset BG
-        ctx.fill((255,0,0))
+        ctx.blit(images.menu,(0,0))
+
+        daBall.x = mouse.mouse['pos'][0]
+        daBall.y = mouse.mouse['pos'][1]
 
         midline.go(ctx)
-        daBall.go(ctx)
-        daFlip.go(ctx)
-        daFlip2.go(ctx)
+        daBall.go(ctx, daFlip, daFlip2)
+        daFlip.go(ctx, keyboard.leftFlipper())
+        daFlip2.go(ctx, keyboard.rightFlipper())
+
+        pygame.draw.rect(ctx,(255,255,255),(leftX,550,1,1))
+        pygame.draw.rect(ctx,(255,255,255),(rightX,550,1,1))
 
         score = score + 100
 
         # Debug
-        fps = constants.muli["15"].render(str(round(clock.get_fps(),1)),True,constants.black)
+        fpsTEXT = str(round(clock.get_fps(),1))
+        fps = constants.muli["15"].render(fpsTEXT,True,constants.black)
         ctx.blit(fps,(15,15))
 
         # Update Window
@@ -80,8 +88,8 @@ def main():
 
 main()
 # if game_over:
-#myimage=PhotoImage(file='Gameover.gif')
-#canvas.create_image(0,0,anchor=NW,image=myimage)
+#myimage=pygame.image.load(file='Gameover.gif')
+# ctx.blit(myimage,(x,y))
 #text_rect = text.get_rect()
     #    text_x = screen.get_width() / 2 - text_rect.width / 2
         #text_y = screen.get_height() / 2 - text_rect.height / 2

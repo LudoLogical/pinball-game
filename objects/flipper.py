@@ -4,12 +4,15 @@ from logic import collisions
 from objects.rect import Rect
 
 class Flipper(Rect):
-    def __init__(self,x,y,w,h,angle,color,spd=[0,0],name="flipper"):
+    def __init__(self,x,y,w,h,angle,activeAngle,color,spd=[0,0],name="flipper"):
         super().__init__(x,y,w,h,color,spd,name)
         self.angle = angle
+        self.activeAngle = activeAngle
 
-    def draw(self, ctx):
+        self.angleCoords = self.prepCoords(angle)
+        self.activeAngleCoords = self.prepCoords(activeAngle)
 
+    def prepCoords(self, theta):
         coOrds = [[self.x - self.w/2, self.y - self.h/2],
                 [self.x + self.w/2, self.y - self.h/2],
                 [self.x + self.w/2, self.y + self.h/2],
@@ -27,9 +30,20 @@ class Flipper(Rect):
             coOrds[n][0] -= rotateX
             coOrds[n][1] -= rotateY
 
-            xnew = coOrds[n][0] * math.cos(self.angle) - coOrds[n][1] * math.sin(self.angle)
-            ynew = coOrds[n][0] * math.sin(self.angle) + coOrds[n][1] * math.cos(self.angle)
+            xnew = coOrds[n][0] * math.cos(theta) - coOrds[n][1] * math.sin(theta)
+            ynew = coOrds[n][0] * math.sin(theta) + coOrds[n][1] * math.cos(theta)
 
             coOrds[n] = [xnew + rotateX, ynew + rotateY]
 
-        pygame.draw.polygon(ctx, self.color, coOrds, 0)
+        return coOrds
+
+    def draw(self, ctx, isActive):
+
+        if isActive:
+            pygame.draw.polygon(ctx, self.color, self.activeAngleCoords, 0)
+        else:
+            pygame.draw.polygon(ctx, self.color, self.angleCoords, 0)
+
+    def go(self, ctx, isActive):
+        self.pos()
+        self.draw(ctx, isActive)

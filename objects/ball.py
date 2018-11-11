@@ -1,4 +1,5 @@
-import pygame, constants
+import pygame, constants, copy
+from logic import collisions
 from pygame import gfxdraw
 from img import images
 from objects.circle import Circle
@@ -12,6 +13,16 @@ class Ball(Circle):
         pass
         #self.spd[1] += constants.TABLE_ACCELERATION
 
+    def sorter(self, a):
+        return a[1]
+
+    def flipperHit(self, left, right):
+        flipCoords = copy.deepcopy(left.angleCoords)
+        flipCoords.sort(key=self.sorter)
+        print(flipCoords)
+        if collisions.lineCircle(flipCoords[0][0],flipCoords[0][1],flipCoords[2][0],flipCoords[2][1],self):
+            print("TOUCHING!!!!!!!")
+
     def pos(self):
         self.accelerate()
         self.y += self.spd[1]
@@ -22,3 +33,7 @@ class Ball(Circle):
         else:
             gfxdraw.filled_circle(ctx,int(self.x),int(self.y),self.r,self.color)
             gfxdraw.aacircle(ctx,int(self.x),int(self.y),self.r,self.color)
+
+    def go(self, ctx, left, right):
+        self.flipperHit(left, right)
+        super().go(ctx)

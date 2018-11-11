@@ -1,4 +1,24 @@
-from math import hypot
+import math
+
+def linePoint(x1, y1, x2, y2, px, py):
+    # get distance from the point to the two ends of the line
+    d1 = math.hypot(px-x1,py-y1)
+    d2 = math.hypot(px-x2,py-y2)
+
+    # get the length of the line
+    lineLen = math.hypot(x2-x1,y2-y1)
+
+    # add buffer zone that will give collision
+    epsilon = 0.1; # higher val = less accurate
+
+    # if the two distances are equal to the line's
+    # length, the point is on the line!
+    # note we use the buffer here to give a range,
+    # rather than one val
+    if (d1+d2 >= lineLen-epsilon and d1+d2 <= lineLen+epsilon):
+        return True
+    else:
+        return False
 
 def rectPoint(rect,point):
     if rect.x < point[0]:
@@ -18,6 +38,16 @@ def rectangles(a,b): # exception is for player's rBall addition
                     if dy < dx: return 1
                     else: return 2
     return 0
+
+def circPoint(circ,point):
+    dx = point[0] - circ.x
+    dy = point[1] - circ.y
+    dd = math.hypot(dx, dy)
+
+    if dd <= circ.r:
+        return True
+    else:
+        return False
 
 def circles(a,b):
     # if distance between their centers is less than the sum of their radii
@@ -57,7 +87,7 @@ def circleTiltedRect(circ, rect):
     # Rotate circle's center point back
     unrotatedCircleX = math.cos(rect.angle) * (circ.x - rect.x) - \
             math.sin(rect.angle) * (circ.y - rect.y) + rect.x;
-    unrotatedCircleY  = math.sin(rect.angle) * (circ.x - rect.x) + \
+    unrotatedCircleY = math.sin(rect.angle) * (circ.x - rect.x) + \
             math.cos(rect.angle) * (circ.y - rect.y) + rect.y
 
     closestX = 0
@@ -66,7 +96,7 @@ def circleTiltedRect(circ, rect):
     # Find the unrotated closest x point from center of unrotated circle
     if (unrotatedCircleX < rect.x):
         closestX = rect.x;
-    elif (unrotatedCircleX  > rect.x + rect.w):
+    elif (unrotatedCircleX > rect.x + rect.w):
         closestX = rect.x + rect.w
     else:
         closestX = unrotatedCircleX
@@ -80,9 +110,44 @@ def circleTiltedRect(circ, rect):
         closestY = unrotatedCircleY;
 
     # Determine collision
-    dx = math.abs(unrotatedCircleX - closestX)
-    dy = math.abs(unrotatedCircleY - closestY)
-    if (math.hypot(dx, dy) < circle.r):
+    dx = unrotatedCircleX - closestX
+    dy = unrotatedCircleY - closestY
+    if math.hypot(dx, dy) < circle.r:
+        return True
+    else:
+        return False
+
+def lineCircle(x1, y1, x2, y2, circ):
+    # is either end INSIDE the circle?
+    # if so, return true immediately
+    inside1 = circPoint(circ, [x1,y1])
+    inside2 = circPoint(circ, [x2,y2])
+    if inside1 or inside2:
+        return True
+
+    # get length of the line
+    lx = x1 - x2
+    ly = y1 - y2
+    length = math.hypot(lx,ly)
+
+    # get dot product of the line and circle
+    dot = ( ((circ.x-x1)*(x2-x1)) + ((circ.y-y1)*(y2-y1)) ) / math.pow(length,2)
+
+    # find the closest point on the line
+    closestX = x1 + (dot * (x2-x1))
+    closestY = y1 + (dot * (y2-y1))
+
+    # is this point actually on the line segment?
+    # if so keep going, but if not, return false
+    if not linePoint(x1,y1,x2,y2, closestX,closestY):
+        return False
+
+    # get distance to closest point
+    dx = closestX - circ.x
+    dy = closestY - circ.y
+    dd = math.hypot(dx, dy)
+
+    if dd <= circ.r:
         return True
     else:
         return False
