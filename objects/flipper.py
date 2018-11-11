@@ -1,6 +1,5 @@
-import pygame, math, constants, copy
+import pygame, math, constants, copy, keyboard
 from pygame import gfxdraw
-from img.images import flippers
 from logic import collisions
 from logic.graphics import sortByX, sortByY
 from objects.rect import Rect
@@ -8,8 +7,16 @@ from objects.rect import Rect
 class Flipper(Rect):
     def __init__(self,x,y,w,h,angle,activeAngle,color,name="flipper"):
         super().__init__(x,y,w,h,color,None,[0,0],name)
+
+        self.pivotX = x-35 # pivotY = y
+
         self.angle = angle
         self.activeAngle = activeAngle
+        self.power = 12
+
+        self.inactiveRecent = 0
+        self.cooldown = 0
+        self.cooldownMax = 4
 
         self.angleCoords = self.prepCoords(angle)
         self.activeAngleCoords = self.prepCoords(activeAngle)
@@ -39,20 +46,46 @@ class Flipper(Rect):
 
         return coOrds
 
+    def isActive(self):
+        if (self.name == "L" and keyboard.leftFlipper()) or (self.name == "R" and keyboard.rightFlipper()):
+            return True
+        else:
+            return False
+
+    def currentCoords(self):
+        if self.isActive():
+            return self.activeAngleCoords
+        else:
+            return self.angleCoords
+
+    def getAngle(self):
+        if self.isActive():
+            return self.activeAngle
+        else:
+            return self.angle
+
     def getHighestPoints(self):
         temp = copy.deepcopy(self.angleCoords)
         temp.sort(key=sortByY)
         return temp[0], temp[1]
 
-    def draw(self, ctx, isActive):
+    def draw(self, ctx):
 
-        if isActive:
+        if self.isActive():
             gfxdraw.filled_polygon(ctx, self.activeAngleCoords, self.color)
             gfxdraw.aapolygon(ctx, self.activeAngleCoords, self.color)
         else:
             gfxdraw.filled_polygon(ctx, self.angleCoords, self.color)
             gfxdraw.aapolygon(ctx, self.angleCoords, self.color)
 
-    def go(self, ctx, isActive):
-        self.pos()
-        self.draw(ctx, isActive)
+    def go(self, ctx, ball):
+        if self.isActive():
+            if self.inactiveRecent > 0 and self.cooldown == 0:
+                ball.checkFlipperHit(self)
+                self.inactiveRecent -= 1
+                self.cooldown = self.cooldownMax
+        else:
+            self.inactiveRecent = 3
+        if self.cooldown > 0:
+            self.cooldown -= 1
+        super().go(ctx)

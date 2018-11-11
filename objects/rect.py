@@ -22,4 +22,4 @@ class Rect(Entity):
         if self.img != None:
             ctx.blit(self.img,(self.x,self.y))
         else:
-            gfxdraw.rectangle(ctx,(self.x,self.y,self.w,self.h),self.color)
+            pygame.draw.rect(ctx,self.color,(self.x,self.y,self.w,self.h))

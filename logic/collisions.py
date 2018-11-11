@@ -1,4 +1,6 @@
-import math
+import math, copy
+from logic.graphics import sortByX, sortByY
+from objects.rect import Rect
 
 def linePoint(x1, y1, x2, y2, px, py):
     # get distance from the point to the two ends of the line
@@ -58,6 +60,26 @@ def circles(a,b):
         return True
     return False
 
+def circPie(circ, pie, pieLowTheta, pieHighTheta):
+
+    if not circles(circ,pie):
+        return False
+    else:
+        # Bounding line test covered by flippers themselves; duplicate code
+        # if lineCircle(pie.x,pie.y,pie.r*math.cos(pieLowTheta),pie.r*math.sin(pieLowTheta),circ):
+        #     return True
+        # elif lineCircle(pie.x,pie.y,pie.r*math.cos(pieHighTheta),pie.r*math.sin(pieHighTheta),circ):
+        #     return True
+        # else:
+            dx = circ.x - pie.x
+            dy = circ.y - pie.y
+            internalTheta = math.atan2(dy,dx)
+            if (internalTheta > pieLowTheta and internalTheta < pieHighTheta) \
+                or (internalTheta + math.tau > pieLowTheta and internalTheta + math.tau < pieHighTheta):
+                return True
+            else:
+                return False
+
 def circleRect(circ,rect):
     # get x and y distance from their centers
     dx = abs(circ.x - rect.x - rect.w / 2)
@@ -83,36 +105,46 @@ def circleRect(circ,rect):
         else:
             return 2 # flip y direction
 
-def circleTiltedRect(circ, rect):
+def circleTiltedRect(circ, rectPoints, rectW, rectH, rectAngle):
+
+    rectAngle = math.tau - rectAngle
+
+    temp = copy.deepcopy(rectPoints)
+    temp.sort(key=sortByX)
+    cX = (temp[3][0] + temp[0][0])/2
+    temp.sort(key=sortByY)
+    cY = (temp[3][1] + temp[0][1])/2
+
+    rect = Rect(cX-rectW/2, cY-rectH/2, rectW, rectH, None)
+
     # Rotate circle's center point back
-    unrotatedCircleX = math.cos(rect.angle) * (circ.x - rect.x) - \
-            math.sin(rect.angle) * (circ.y - rect.y) + rect.x;
-    unrotatedCircleY = math.sin(rect.angle) * (circ.x - rect.x) + \
-            math.cos(rect.angle) * (circ.y - rect.y) + rect.y
+    unrotatedCircleX = math.cos(rectAngle) * (circ.x - cX) - math.sin(rectAngle) * (circ.y - cY) + cX
+    unrotatedCircleY = math.sin(rectAngle) * (circ.x - cX) + math.cos(rectAngle) * (circ.y - cY) + cY
 
     closestX = 0
     closestY = 0
 
     # Find the unrotated closest x point from center of unrotated circle
-    if (unrotatedCircleX < rect.x):
-        closestX = rect.x;
-    elif (unrotatedCircleX > rect.x + rect.w):
+    if unrotatedCircleX < rect.x:
+        closestX = rect.x
+    elif unrotatedCircleX > rect.x + rect.w:
         closestX = rect.x + rect.w
     else:
         closestX = unrotatedCircleX
 
     # Find the unrotated closest y point from center of unrotated circle
-    if (unrotatedCircleY < rect.y):
+    if unrotatedCircleY < rect.y:
         closestY = rect.y
-    elif (unrotatedCircleY > rect.y + rect.h):
-        closestY = rect.y + rect.h;
+    elif unrotatedCircleY > rect.y + rect.h:
+        closestY = rect.y + rect.h
     else:
-        closestY = unrotatedCircleY;
+        closestY = unrotatedCircleY
 
     # Determine collision
     dx = unrotatedCircleX - closestX
     dy = unrotatedCircleY - closestY
-    if math.hypot(dx, dy) < circle.r:
+
+    if math.hypot(dx, dy) < circ.r:
         return True
     else:
         return False

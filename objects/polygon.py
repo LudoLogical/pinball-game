@@ -9,6 +9,9 @@ class Polygon(Entity):
         self.points = points
         self.angle = angle
 
+    def getAngle(self):
+        return self.angle
+
     def draw(self, ctx):
         gfxdraw.filled_polygon(ctx, self.points, self.color)
         gfxdraw.aapolygon(ctx, self.points, self.color)

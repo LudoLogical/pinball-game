@@ -1,11 +1,14 @@
-import pygame, constants, copy, math
+import pygame, constants, copy, math, mouse
 from logic import collisions
-from logic.graphics import sortByY
+from logic.graphics import sortByX, sortByY
 from pygame import gfxdraw
 from img import images
 from objects.circle import Circle
 
 class Ball(Circle):
+
+    bounciness = 0.8
+
     def __init__(self,x,y,r,color,img=None,name="ball"):
         super().__init__(x,y,r,color,[0,0],name)
         self.img = img
@@ -14,46 +17,93 @@ class Ball(Circle):
         pass
         self.spd[1] += constants.TABLE_ACCELERATION
 
-    def flipperHit(self, flippers):
-        flipCoords = copy.deepcopy(flippers[0].angleCoords)
+    def checkFlipperHit(self, flipper):
+        flipCoords = copy.deepcopy(flipper.angleCoords)
         flipCoords.sort(key=sortByY)
-        print(flipCoords)
-        if collisions.lineCircle(flipCoords[0][0],flipCoords[0][1],flipCoords[2][0],flipCoords[2][1],self):
-            print("TOUCHING!!!!!!!")
 
-    def moveIllegal(self, flippers, walls):
+        small, big = 0, 0
+
+        if flipper.angle < flipper.activeAngle:
+            small = flipper.angle
+            big = flipper.activeAngle
+        else:
+            small = flipper.activeAngle
+            big = flipper.angle
+
+        vertLeeway = abs(flipper.h*math.cos(5*math.pi/36))
+        print(vertLeeway)
+        if collisions.circPie(self, Circle(flipper.pivotX,flipper.y,flipper.w,None), small, big) \
+            or collisions.circleTiltedRect(self, flipper.currentCoords(), flipper.w, flipper.h, flipper.getAngle()):
+            #while collisions.circleTiltedRect(self, flipCoords, flipper.w, flipper.h, flipper.getAngle()):
+                #self.y -= 2
+
+            self.bounce(flipper)
+
+            if flipper.name == "L":
+                naturalModifier = 5*math.pi/36
+            elif flipper.name == "R":
+                naturalModifier = -5*math.pi/36
+            else:
+                print("Done goofed @ ball flipper hit")
+
+            self.spd[0] -= -flipper.power*math.cos(naturalModifier + math.pi/2)
+            self.spd[1] -= flipper.power*math.sin(naturalModifier + math.pi/2)
+            self.x += self.spd[0]
+            self.y += self.spd[1]
+
+
+    def moveIllegal(self, ctx, flippers, bases, walls):
         for f in flippers:
-            flipCoords = copy.deepcopy(f.angleCoords)
-            flipCoords.sort(key=sortByY)
-            if collisions.lineCircle(flipCoords[0][0],flipCoords[0][1],flipCoords[2][0],flipCoords[2][1],self):
+            if collisions.circleTiltedRect(self, f.currentCoords(), f.w, f.h, f.getAngle()):
                 return f
-        for w in walls:
-            flipCoords = copy.deepcopy(w.points)
+        for b in bases:
+            flipCoords = copy.deepcopy(b.points)
             flipCoords.sort(key=sortByY)
-            if collisions.lineCircle(flipCoords[0][0],flipCoords[0][1],flipCoords[2][0],flipCoords[2][1],self):
-                return w
+            w = abs((flipCoords[2][0]-flipCoords[0][0]))
+            h = abs((flipCoords[1][1]-flipCoords[0][1]))
+            if collisions.circleTiltedRect(self, flipCoords, w, h, b.angle):
+                return b
+        for w in walls:
+            collides = collisions.circleRect(self, w)
+            if collides:
+                self.x -= self.spd[0]
+                self.y -= self.spd[1]
+                if collides == 1 or collides == 3:
+                    self.spd[0] *= -self.bounciness
+                if collides == 2 or collides == 3:
+                    self.spd[1] *= -self.bounciness
+                self.x += self.spd[0]
+                self.y += self.spd[1]
+
         return None
 
     def bounce(self, surface):
-        # angleOfAttack = math.atan2(self.spd[1],self.spd[0])
-        normalAngle = surface.angle + math.pi/2
+
+        # [newvx, newvy]=[oldvx, oldvy]−[C*normalx, C*normaly] where C = 2oldvxnx + 2oldvyny
+
+        normalAngle = surface.getAngle() + math.pi/2
         normalX = math.cos(normalAngle)
         normalY = math.sin(normalAngle)
 
         constant = 2*(self.spd[0]*normalX + self.spd[1]*normalY)
 
-        self.spd[0] -= constant*normalX
-        self.spd[1] -= constant*normalY
+        self.spd[0] -= constant*normalX * self.bounciness
+        self.spd[1] -= constant*normalY * self.bounciness
 
-    def pos(self, flippers, walls):
+    def pos(self, ctx, flippers, bases, walls):
         self.accelerate()
         self.x += self.spd[0]
         self.y += self.spd[1]
-        bounceSurface = self.moveIllegal(flippers, walls)
+        bounceSurface = self.moveIllegal(ctx, flippers, bases, walls)
         if bounceSurface != None:
             self.x -= self.spd[0]
             self.y -= self.spd[1]
             self.bounce(bounceSurface)
+            self.x += self.spd[0]
+            self.y += self.spd[1]
+        #self.x = mouse.mouse['pos'][0]
+        #self.y = mouse.mouse['pos'][1]
+        print(" ")
 
     def draw(self, ctx):
         if self.img != None:
@@ -62,7 +112,6 @@ class Ball(Circle):
             gfxdraw.filled_circle(ctx,int(self.x),int(self.y),self.r,self.color)
             gfxdraw.aacircle(ctx,int(self.x),int(self.y),self.r,self.color)
 
-    def go(self, ctx, flippers, walls):
-        self.flipperHit(flippers)
-        self.pos(flippers, walls)
+    def go(self, ctx, flippers, bases, walls):
+        self.pos(ctx, flippers, bases, walls)
         self.draw(ctx)
