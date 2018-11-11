@@ -1,11 +1,13 @@
-import pygame, math
-import constants
+import pygame, math, constants, copy
+from pygame import gfxdraw
+from img.images import flippers
 from logic import collisions
+from logic.graphics import sortByX, sortByY
 from objects.rect import Rect
 
 class Flipper(Rect):
-    def __init__(self,x,y,w,h,angle,activeAngle,color,spd=[0,0],name="flipper"):
-        super().__init__(x,y,w,h,color,spd,name)
+    def __init__(self,x,y,w,h,angle,activeAngle,color,name="flipper"):
+        super().__init__(x,y,w,h,color,None,[0,0],name)
         self.angle = angle
         self.activeAngle = activeAngle
 
@@ -37,12 +39,19 @@ class Flipper(Rect):
 
         return coOrds
 
+    def getHighestPoints(self):
+        temp = copy.deepcopy(self.angleCoords)
+        temp.sort(key=sortByY)
+        return temp[0], temp[1]
+
     def draw(self, ctx, isActive):
 
         if isActive:
-            pygame.draw.polygon(ctx, self.color, self.activeAngleCoords, 0)
+            gfxdraw.filled_polygon(ctx, self.activeAngleCoords, self.color)
+            gfxdraw.aapolygon(ctx, self.activeAngleCoords, self.color)
         else:
-            pygame.draw.polygon(ctx, self.color, self.angleCoords, 0)
+            gfxdraw.filled_polygon(ctx, self.angleCoords, self.color)
+            gfxdraw.aapolygon(ctx, self.angleCoords, self.color)
 
     def go(self, ctx, isActive):
         self.pos()

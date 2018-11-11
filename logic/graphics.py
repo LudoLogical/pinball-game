@@ -1,3 +1,9 @@
+def sortByX(a):
+    return a[0]
+
+def sortByY(a):
+    return a[1]
+
 # This additional code was taken from https://github.com/Mekire/rounded-rects-pygame
 # Original Author: Sean J. McKiernan
 # Original Publish Date: 03/17/2014

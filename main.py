@@ -2,6 +2,7 @@ import pygame, constants, math
 import keyboard, mouse
 from logic import collisions
 from img import images
+from objects.polygon import Polygon
 from objects.rect import Rect
 from objects.flipper import Flipper
 from objects.ball import Ball
@@ -52,21 +53,33 @@ def main():
     leftX = -15 + constants.gameW/2-45
     rightX = 15 + constants.gameW/2+45 + 2*35
 
-    daFlip = Flipper(leftX,550,90,20,math.pi/6,-math.pi/6,(0,0,255))
-    daFlip2 = Flipper(rightX,550,90,20,5*math.pi/6,7*math.pi/6,(0,128,255))
+    daFlip = Flipper(leftX,550,90,20,5*math.pi/36,-5*math.pi/36,(226, 135, 80),"L")
+    daFlip2 = Flipper(rightX,550,90,20,31*math.pi/36,41*math.pi/36,(226, 135, 80),"R")
+
+    leftHigh, left2ndHigh = daFlip.getHighestPoints()
+    leftXRate = math.tan(daFlip.angle)
+    leftmostTop = [0,leftHigh[1]-leftHigh[0]*leftXRate]
+    leftmostBot = [0,left2ndHigh[1]-left2ndHigh[0]*leftXRate]
+    leftBase = Polygon([leftmostTop,leftHigh,left2ndHigh,leftmostBot],daFlip.angle,(0,0,0))
+
+    rightHigh, right2ndHigh = daFlip2.getHighestPoints()
+    rightXRate = -math.tan(daFlip2.angle)
+    rightmostTop = [constants.gameW,rightHigh[1]-(constants.gameW-rightHigh[0])*rightXRate]
+    rightmostBot = [constants.gameW,right2ndHigh[1]-(constants.gameW-right2ndHigh[0])*rightXRate]
+    rightBase = Polygon([rightmostTop,rightHigh,right2ndHigh,rightmostBot],daFlip2.angle,(0,0,0))
 
     midline = Rect(199,0,2,600,(0,0,0))
 
     while running:
         running = listen(running)
         # Reset BG
-        ctx.blit(images.menu,(0,0))
+        ctx.fill((56, 45, 62))
 
-        daBall.x = mouse.mouse['pos'][0]
-        daBall.y = mouse.mouse['pos'][1]
+        leftBase.go(ctx)
+        rightBase.go(ctx)
 
         midline.go(ctx)
-        daBall.go(ctx, daFlip, daFlip2)
+        daBall.go(ctx, [daFlip, daFlip2], [leftBase, rightBase])
         daFlip.go(ctx, keyboard.leftFlipper())
         daFlip2.go(ctx, keyboard.rightFlipper())
 
