@@ -1,3 +1,3 @@
 # pinball-game
 The memiest bois
-Made with love, python 3, pygame, pyinstaller, atom, and pycharm
+Made with love, Python 3, pygame, pyinstaller, Atom, PyCharm, and Illustrator
